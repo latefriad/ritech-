@@ -1,0 +1,61 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ============================================
+    // PRODUCT IMAGES
+    // ============================================
+    match /products/{allPaths=**} {
+      // Anyone can view product images
+      allow read: if true;
+
+      // Only admins can upload product images
+      allow create: if request.auth != null
+                    && request.auth.token.admin == true
+                    && request.resource.size < 5 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+
+      // Only admins can update/delete product images
+      allow update, delete: if request.auth != null
+                            && request.auth.token.admin == true;
+    }
+
+    // ============================================
+    // USER AVATARS
+    // ============================================
+    match /avatars/{userId}/{allPaths=**} {
+      // Anyone can view avatars
+      allow read: if true;
+
+      // Users can upload their own avatar
+      allow create, update: if request.auth != null
+                            && request.auth.uid == userId
+                            && request.resource.size < 2 * 1024 * 1024
+                            && request.resource.contentType.matches('image/.*');
+
+      // Users can delete their own avatar
+      allow delete: if request.auth != null
+                    && request.auth.uid == userId;
+    }
+
+    // ============================================
+    // ORDER RECEIPTS (future use)
+    // ============================================
+    match /receipts/{orderId}/{allPaths=**} {
+      // Users can read their own receipts
+      allow read: if request.auth != null;
+
+      // Admins can upload receipts
+      allow create: if request.auth != null
+                    && request.auth.token.admin == true;
+    }
+
+    // ============================================
+    // TEMP UPLOADS (admin only)
+    // ============================================
+    match /temp/{allPaths=**} {
+      allow read, write: if request.auth != null
+                         && request.auth.token.admin == true;
+    }
+  }
+}
