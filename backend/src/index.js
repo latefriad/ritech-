@@ -7,6 +7,8 @@ import { initializeFirebase } from "./config/firebase.js";
 import productRoutes from "./routes/products.js";
 import orderRoutes from "./routes/orders.js";
 import userRoutes from "./routes/users.js";
+import settingsRoutes from "./routes/settings.js";
+import syncRoutes from "./routes/sync.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,6 +31,8 @@ app.get("/api/health", (req, res) => {
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/sync", syncRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -57,17 +57,17 @@ export default function Header({ onMenuToggle, searchQuery, onSearchChange }) {
           )}
         </Link>
         {user ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="header-user-badge">
             {user.admin && (
               <Link
                 to="/admin"
-                style={{ fontSize: 12, fontWeight: 700, color: "#453ec1", textDecoration: "none", padding: "4px 10px", background: "#eeedfe", borderRadius: 6 }}
+                className="header-admin-link"
               >
                 ⚡ لوحة التحكم
               </Link>
             )}
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#453ec1" }}>
-              {user.displayName || user.email}
+            <span className="header-user-name">
+              {user.displayName || user.email?.split("@")[0]}
             </span>
             <button
               className="icon-btn"
@@ -83,7 +83,7 @@ export default function Header({ onMenuToggle, searchQuery, onSearchChange }) {
             👤
           </Link>
         )}
-        <button className="hamburger" onClick={onMenuToggle}>
+        <button className="hamburger" onClick={onMenuToggle} aria-label="القائمة">
           ☰
         </button>
       </div>

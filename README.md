@@ -1,177 +1,84 @@
-# جهزك — متجر إلكتروني
+# جهزك للتقنية — متجر الهواتف والحواسيب وإكسسواراتها 📱💻
 
-متجر إلكتروني عربي RTL مبني بـ React + Express + Firebase
-
-## التقنيات
-
-**Frontend:** React 19, Vite 8, Tailwind CSS 4, React Router 7  
-**Backend:** Node.js, Express 5, Firebase Admin SDK  
-**Database:** Firebase Firestore  
-**Auth:** Firebase Authentication
+متجر إلكتروني عربي متكامل بنظام RTL، مخصص لبيع الهواتف الذكية، الحواسيب المحمولة والمكتبية، وإكسسوارات الأجهزة، مع ربط كامل بقاعدة بيانات **Google Sheets** لاستقبال الطلبات وإدارة المنتجات.
 
 ---
 
-## إعداد Firebase
+## 🚀 التقنيات المستخدمة
 
-### 1. إنشاء مشروع Firebase
-
-1. اذهب إلى [Firebase Console](https://console.firebase.google.com)
-2. أنشئ مشروع جديد باسم `nesrine-collection`
-3. أضف تطبيق Web جديد
-
-### 2. تفعيل الخدمات
-
-- **Firestore:** أنشئ قاعدة بيانات Firestore (ابدأوضع التجربة)
-- **Authentication:** فعّل تسجيل الدخول بالبريد/كلمة المرور
-
-### 3. نسخ البيانات
-
-From Firebase Console → Project Settings → General → Your apps → Web app:
-
-```
-apiKey: "..."
-authDomain: "..."
-projectId: "..."
-storageBucket: "..."
-messagingSenderId: "..."
-appId: "..."
-```
-
-### 4. إعداد Frontend
-
-عدّل `frontend/.env`:
-
-```
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_API_URL=http://localhost:5000/api
-```
-
-### 5. إعداد Backend
-
-1. من Firebase Console → Service Accounts → Generate new private key
-2. احفظ الملف كـ `backend/serviceAccountKey.json`
-3. عدّل `backend/.env`:
-
-```
-PORT=5000
-NODE_ENV=development
-GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
-CORS_ORIGIN=http://localhost:5173
-```
-
-### 6. ت Seed البيانات
-
-```bash
-cd backend
-npm run seed
-```
-
-هذا يُنشئ المنتجات والتصنيفات في Firestore.
+- **Frontend:** React 19, Vite 8, Tailwind CSS 4, React Router 7
+- **Backend:** Node.js (ESM), Express 5, Google Sheets Service
+- **Database:** Google Sheets (Apps Script Web App / CSV) + حفظ محلي احتياطي
+- **Currency & Localization:** الدينار الجزائري (د.ج) + 58 ولاية جزائرية
 
 ---
 
-## التشغيل المحلي
+## 📊 ربط قاعدة البيانات بـ Google Sheets
 
-### Backend
+المتجر يدعم Google Sheets كقاعدة بيانات حية (قراءة المنتجات + تسجيل الطلبات فورياً):
 
+1. **إنشاء جدول Google Sheets:**
+   - قم بإنشاء جدول جديد وأضف ورقتين:
+     - `Products`: العناوين `id`, `name`, `price`, `oldPrice`, `discount`, `cat`, `image`, `description`
+     - `Orders`: العناوين `orderId`, `date`, `customerName`, `phone`, `wilaya`, `address`, `items`, `total`, `notes`, `status`
+2. **إضافة كود Apps Script:**
+   - انسخ الكود الموجود في [`backend/google-apps-script.js`](./backend/google-apps-script.js).
+   - في Google Sheets، توجه إلى **Extensions ➔ Apps Script** والصق الكود.
+   - اضغط **Deploy ➔ New deployment ➔ Web app**.
+   - اختر **Execute as: Me** و **Who has access: Anyone**.
+3. **وضع الرابط في المتجر:**
+   - افتح `backend/.env` وضع الرابط:
+     ```env
+     GOOGLE_SHEET_WEBAPP_URL=https://script.google.com/macros/s/.../exec
+     ```
+   - دليل تفصيلي كامل متوفر في [`backend/GOOGLE_SHEETS_SETUP.md`](./backend/GOOGLE_SHEETS_SETUP.md).
+
+> **ملاحظة:** إذا لم تقم بإدخال الرابط بعد، سيعمل المتجر تلقائياً بالكتالوج التقني الافتراضي الغني، وستُحفظ جميع الطلبات محلياً في `backend/data/orders.json` دون أي انقطاع.
+
+---
+
+## 🔐 لوحة التحكم (Admin Dashboard)
+
+لإدارة المنتجات والمخزون والطلبات، توجه إلى المسار `/admin`. يتم تسجيل الدخول بحساب المدير المسؤول عن المتجر.
+
+---
+
+## 🏷️ أقسام وتصنيفات المتجر
+
+| التصنيف | الكود (`cat`) | أمثلة للمنتجات |
+|---|---|---|
+| **هواتف ذكية** | `phones` | iPhone 16 Pro Max, Samsung Galaxy S24 Ultra, Xiaomi 14 Ultra |
+| **إكسسوارات الهواتف** | `phone-accessories` | سماعات AirPods Pro 2, شواحن سريعة 20W, باور بانك Anker, كفرات MagSafe |
+| **حواسيب ولابتوب** | `computers` | MacBook Pro M3, ASUS ROG Zephyrus G16, ThinkPad X1 Carbon |
+| **ملحقات الكمبيوتر** | `pc-accessories` | كيبورد ميكانيكي Keychron, ماوس MX Master 3S, شاشات OLED, أقراص NVMe SSD |
+
+---
+
+## 💻 التشغيل المحلي
+
+### 1. تشغيل Backend
 ```bash
 cd backend
 npm install
 npm run dev
-# Server runs on http://localhost:5000
+# الخادم يعمل على http://localhost:5000
 ```
 
-### Frontend
-
+### 2. تشغيل Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
-# App runs on http://localhost:5173
+# الموقع يعمل على http://localhost:5173
 ```
 
 ---
 
-## هيكل المشروع
+## 📱 الصفحات المدعومة
 
-```
-saas ecoomerce/
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── home/        (HeroSlider, CategoriesSection, PromoBanner)
-│   │   │   ├── layout/      (Header, Footer, Navbar, MobileMenu, Layout, ScrollToTop)
-│   │   │   ├── products/    (ProductCard, FiltersBar, Pagination, ProductImage)
-│   │   │   └── ui/          (LoadingSkeleton)
-│   │   ├── context/         (Cart, Wishlist, Toast, Auth)
-│   │   ├── hooks/           (useProducts)
-│   │   ├── pages/           (Home, Shop, ProductPage, Cart, Wishlist, Checkout, Login, Register, Shipping, Payment, About, Contact, Terms, Privacy, ReturnPolicy, NotFound)
-│   │   ├── services/        (api.js, firebase.js)
-│   │   └── data/            (products.js)
-│   └── .env
-├── backend/
-│   ├── src/
-│   │   ├── config/          (firebase.js)
-│   │   ├── controllers/     (product, order, user)
-│   │   ├── middleware/       (auth.js)
-│   │   └── routes/          (products, orders, users)
-│   ├── scripts/seed.js
-│   ├── serviceAccountKey.json  (NOT in git)
-│   └── .env
-```
-
----
-
-## الصفحات
-
-| الصفحة | المسار | الوصف |
-|--------|--------|-------|
-| الرئيسية | `/` | Slider + تصنيفات + منتجات مميزة + بانر |
-| المتجر | `/shop` | جميع المنتجات مع فلترة وترتيب |
-| منتج | `/product/:id` | تفاصيل المنتج |
-| السلة | `/cart` | إدارة السلة |
-| المفضلة | `/wishlist` | المنتجات المفضلة |
-| الدفع | `/checkout` | إتمام الطلب |
-| تسجيل الدخول | `/login` | تسجيل الدخول |
-| إنشاء حساب | `/register` | تسجيل حساب جديد |
-| الشحن | `/shipping` | معلومات الشحن |
-| الدفع | `/payment` | طرق الدفع |
-| عن المتجر | `/about` | معلومات المتجر |
-| تواصل معنا | `/contact` | نموذج تواصل |
-| الشروط | `/terms` | شروط الاستخدام |
-| الخصوصية | `/privacy` | سياسة الخصوصية |
-| الاستبدال | `/return-policy` | سياسة الاستبدال |
-
----
-
-## نشر التطبيق
-
-### Frontend → Vercel
-
-```bash
-cd frontend
-npm run build
-# Deploy dist/ folder to Vercel
-```
-
-### Backend → Render
-
-```bash
-cd backend
-# Render auto-detects Node.js
-# Set environment variables in Render dashboard
-```
-
----
-
-## ملاحظات
-
-- السلة والمفضلة تُحفظ في localStorage
-- الـ API يتحدث مع Express backend مع Firebase Firestore
-- إذا لم يعمل الـ API، يستخدم بيانات ثابتة كـ fallback
-- جميع الأسعار بالدينار الجزائري (د.ج)
+- `/`: الصفحة الرئيسية (سلايدر تقني + أقسام الهواتف والحواسيب + عروض خاصة + منتجات مميزة)
+- `/shop`: المتجر مع فلترة حسب الأجهزة (هواتف، حواسيب، ملحقات)، البحث، والترتيب
+- `/product/:id`: تفاصيل الجهاز مع المواصفات وزر طلب مباشر
+- `/cart` & `/wishlist`: السلة والمفضلة (تُحفظ في المتصفح تلقائياً)
+- `/checkout`: إتمام الطلب مع اختيار ولايات الجزائر، وتأكيد فوري يرسل البيانات إلى Google Sheets
+- `/admin/orders`: لوحة تحكم إدارة الطلبات ومتابعة الحالات وتحديثها

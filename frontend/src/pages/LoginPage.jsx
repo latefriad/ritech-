@@ -19,16 +19,20 @@ export default function LoginPage() {
     }
     setSubmitting(true);
     try {
-      await login(email, password);
+      const loggedUser = await login(email, password);
       showToast("✅ تم تسجيل الدخول بنجاح");
-      navigate("/");
+      if (loggedUser && (loggedUser.admin || email.includes("admin"))) {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       const msg =
         err.code === "auth/user-not-found"
           ? "❌ المستخدم غير موجود"
           : err.code === "auth/wrong-password"
           ? "❌ كلمة المرور غير صحيحة"
-          : "❌ خطأ في تسجيل الدخول";
+          : "❌ خطأ في تسجيل الدخول: " + (err.message || "");
       showToast(msg);
     } finally {
       setSubmitting(false);
@@ -63,6 +67,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="example@email.com"
+            required
             style={{
               width: "100%",
               padding: "10px 14px",
@@ -86,6 +91,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
+            required
             style={{
               width: "100%",
               padding: "10px 14px",
@@ -109,7 +115,7 @@ export default function LoginPage() {
           {submitting ? "⏳ جاري الدخول..." : "🚀 تسجيل الدخول"}
         </button>
 
-        <p style={{ textAlign: "center", fontSize: 13, color: "#6b7280" }}>
+        <p style={{ textAlign: "center", fontSize: 13, color: "#6b7280", margin: "4px 0 0" }}>
           ليس لديك حساب؟{" "}
           <Link to="/register" style={{ color: "#453ec1", fontWeight: 600 }}>
             أنشئ حساباً جديداً

@@ -4,16 +4,16 @@ import { db } from "./firebase";
 // Default site settings
 const defaultSettings = {
   // General
-  siteName: "جهزك",
-  siteNameEn: "Gehazek",
-  tagline: "نهدف لمنحك تجربة تسوّق سهلة ومتعة حقيقية",
+  siteName: "جهزك للتقنية",
+  siteNameEn: "Gehazek Tech",
+  tagline: "وجهتك الأولى للهواتف الذكية، الحواسيب وإكسسواراتها الأصلية",
   logo: "",
   favicon: "",
 
   // Contact
   phone: "0672.43.05.32",
-  email: "info@gehazek.dz",
-  address: "الجزائر",
+  email: "contact@gehazek-tech.dz",
+  address: "الجزائر العاصمة، الجزائر",
 
   // Social Media
   facebook: "",
@@ -21,53 +21,53 @@ const defaultSettings = {
   twitter: "",
 
   // Topbar
-  topbarText: "🚚 توصيل لجميع الولايات — الدفع عند الاستلام",
+  topbarText: "⚡ هواتف وحواسيب أصلية مع الضمان — توصيل سريع والدفع عند الاستلام",
   topbarPhone: "0672.43.05.32",
 
   // Hero Slides
   slides: [
     {
       id: 1,
-      badge: "✨ مجموعة 2026",
-      title: "جهزك.. أفضل\nاختياراتك",
-      subtitle: "نهدف لمنحك تجربة تسوّق سهلة ومتعة حقيقية",
+      badge: "⚡ أحدث أجهزة 2026",
+      title: "أقوى الهواتف والحواسيب\nبأفضل الأسعار",
+      subtitle: "أجهزة أصلية مع ضمان شامل، وتوصيل سريع والدفع عند الاستلام لجميع الولايات",
       btn1: "تسوّق الآن",
-      btn2: "اكتشف المزيد",
-      gradient: "linear-gradient(135deg, #453ec1 0%, #1a1460 60%, #0d0b3a 100%)",
+      btn2: "اكتشف الهواتف",
+      gradient: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 60%, #030712 100%)",
     },
     {
       id: 2,
-      badge: "🔥 عروض محدودة",
-      title: "خصومات تصل\nإلى 25%",
-      subtitle: "تسوّق بذوق مع خصومات موسمية رائعة",
-      btn1: "العروض الآن",
+      badge: "🔥 عروض حصرية",
+      title: "خصومات تصل\nإلى 25% على اللابتوبات",
+      subtitle: "تخفيضات كبرى على الحواسيب المحمولة وإكسسوارات الألعاب الاحترافية",
+      btn1: "عروض اللابتوب",
       btn2: "تواصل معنا",
-      gradient: "linear-gradient(135deg, #e24b4a 0%, #8b1e1e 60%, #3a0808 100%)",
+      gradient: "linear-gradient(135deg, #0284c7 0%, #0369a1 60%, #082f49 100%)",
     },
     {
       id: 3,
-      badge: "🚚 شحن سريع",
-      title: "توصيل لجميع\nالولايات",
-      subtitle: "شحن سريع والدفع عند الاستلام لجميع الولايات",
-      btn1: "اطلب الآن",
+      badge: "🚚 توصيل 58 ولاية",
+      title: "ضمان حقيقي\nودفع عند الاستلام",
+      subtitle: "افحص جهازك قبل الدفع مع سياسة استبدال ميسرة وسريعة لجميع الولايات",
+      btn1: "تصفح المتجر",
       btn2: "معرفة المزيد",
-      gradient: "linear-gradient(135deg, #1a9e75 0%, #0a5c45 60%, #042e22 100%)",
+      gradient: "linear-gradient(135deg, #0d9488 0%, #0f766e 60%, #134e4a 100%)",
     },
   ],
 
   // Promo Banner
   promo: {
-    badge: "✨ عروض هذا الأسبوع",
-    title: "تسوّق بذوق — خصومات موسمية",
-    subtitle: "شحن سريع لجميع الولايات، والدفع عند الاستلام",
+    badge: "⚡ عروض الموسم التقنية",
+    title: "تجهيزات احترافية — هواتف، حواسيب وإكسسوارات",
+    subtitle: "توصيل سريع وآمن لجميع ولايات الجزائر، مع إمكانية الدفع عند الاستلام والضمان",
     btn1: "تسوّق الآن",
     btn2: "تواصل معنا",
   },
 
   // Footer
   footer: {
-    description: "نهدف لمنحك تجربة تسوّق سهلة وممتعة مع أفضل المنتجات وأسرع التوصيل لجميع ولايات الجزائر.",
-    copyright: "© 2026 جهزك — جميع الحقوق محفوظة",
+    description: "متجر جهزك للتقنية: نوفر لك أحدث الهواتف الذكية، الحواسيب المحمولة، وأفضل الإكسسوارات الأصلية مع ضمان الجودة وأسرع توصيل في الجزائر.",
+    copyright: "© 2026 جهزك للتقنية — جميع الحقوق محفوظة",
   },
 
   // Shipping
@@ -89,27 +89,31 @@ const defaultSettings = {
 
 export async function getSiteSettings() {
   try {
-    const docRef = doc(db, "settings", "site");
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return { ...defaultSettings, ...docSnap.data() };
+    const res = await fetch("/api/settings");
+    if (res.ok) {
+      const data = await res.json();
+      return { ...defaultSettings, ...data };
     }
-    return defaultSettings;
   } catch (err) {
-    console.warn("Failed to load settings, using defaults:", err.message);
-    return defaultSettings;
+    console.warn("Using default settings:", err.message);
   }
+  return defaultSettings;
 }
 
 export async function updateSiteSettings(settings) {
   try {
-    const docRef = doc(db, "settings", "site");
-    await setDoc(docRef, { ...settings, updatedAt: serverTimestamp() }, { merge: true });
-    return true;
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
   } catch (err) {
-    console.error("Failed to save settings:", err.message);
-    throw err;
+    console.error("Failed to save settings to API/Google Sheets:", err.message);
   }
+  return settings;
 }
 
 export { defaultSettings };

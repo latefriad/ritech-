@@ -5,13 +5,13 @@ import {
   createOrder,
   updateOrderStatus,
 } from "../controllers/orderController.js";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate, optionalAuth } from "../middleware/auth.js";
 
 const router = Router();
 
-router.get("/", authenticate, getOrders);
-router.get("/:id", authenticate, getOrderById);
+router.get("/", optionalAuth, getOrders);
+router.get("/:id", optionalAuth, getOrderById);
 router.post("/", createOrder);
-router.put("/:id/status", authenticate, updateOrderStatus);
+router.put("/:id/status", optionalAuth, updateOrderStatus);
 
 export default router;

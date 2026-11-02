@@ -8,7 +8,7 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", price: "", oldPrice: "", discount: "", cat: "clothing", image: "", landingPage: "", landingPageImage: "" });
+  const [form, setForm] = useState({ name: "", price: "", oldPrice: "", discount: "", cat: "phones", image: "", landingPage: "", landingPageImage: "" });
 
   const loadProducts = async () => {
     setLoading(true);
@@ -39,7 +39,7 @@ export default function AdminProductsPage() {
   }, []);
 
   const resetForm = () => {
-    setForm({ name: "", price: "", oldPrice: "", discount: "", cat: "clothing", image: "", landingPage: "", landingPageImage: "" });
+    setForm({ name: "", price: "", oldPrice: "", discount: "", cat: "phones", image: "", landingPage: "", landingPageImage: "" });
     setEditing(null);
     setShowForm(false);
   };
@@ -168,11 +168,10 @@ export default function AdminProductsPage() {
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", display: "block", marginBottom: 4 }}>التصنيف</label>
                   <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })} style={{ ...inputStyle, direction: "rtl" }}>
-                    <option value="clothing">ملابس</option>
-                    <option value="hoodie">هوديات</option>
-                    <option value="poster">بوسترات</option>
-                    <option value="music">موسيقى</option>
-                    <option value="accessories">إكسسوارات</option>
+                    <option value="phones">📱 هواتف ذكية</option>
+                    <option value="phone-accessories">🎧 إكسسوارات الهواتف</option>
+                    <option value="computers">💻 حواسيب ولابتوب</option>
+                    <option value="pc-accessories">⌨️ ملحقات الكمبيوتر</option>
                   </select>
                 </div>
               </div>
@@ -207,13 +206,14 @@ export default function AdminProductsPage() {
       )}
 
       {/* Products Table */}
-      <div style={{ background: "white", borderRadius: 14, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
+      <div className="admin-table-wrapper">
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>⏳ جاري التحميل...</div>
         ) : products.length === 0 ? (
           <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>لا توجد منتجات</div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <table style={{ width: "100%", minWidth: 600, borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ background: "#f5f5f8" }}>
                 <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 700 }}>المنتج</th>
@@ -258,6 +258,7 @@ export default function AdminProductsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { createOrder } from "../services/firestore";
+import { createOrder } from "../services/api";
 import { wilayas } from "../data/wilayas";
 
 export default function CheckoutPage() {
@@ -85,13 +85,13 @@ export default function CheckoutPage() {
   };
 
   return (
-    <section style={{ padding: "48px 24px", maxWidth: 900, margin: "0 auto" }}>
+    <section style={{ padding: "clamp(24px, 4vw, 48px) clamp(12px, 3vw, 24px)", maxWidth: 900, margin: "0 auto" }}>
       <div className="section-header">
         <div className="section-badge">📦 إتمام الطلب</div>
         <div className="section-title">أكمل طلبك</div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+      <div className="checkout-grid">
         <form
           onSubmit={handleSubmit}
           style={{

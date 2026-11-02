@@ -42,7 +42,7 @@ export default function ProductCard({ product }) {
         {wished ? "❤️" : "🤍"}
       </button>
 
-      <div className="product-img">
+      <div className="product-img" style={{ position: "relative" }}>
         {product.image ? (
           <img
             src={product.image}
@@ -51,6 +51,23 @@ export default function ProductCard({ product }) {
           />
         ) : (
           <ProductImage />
+        )}
+        {product.stock === 0 && (
+          <span
+            style={{
+              position: "absolute",
+              bottom: 8,
+              right: 8,
+              background: "#e24b4a",
+              color: "white",
+              padding: "2px 8px",
+              borderRadius: 4,
+              fontSize: 11,
+              fontWeight: 800,
+            }}
+          >
+            نفد المخزون
+          </span>
         )}
       </div>
 

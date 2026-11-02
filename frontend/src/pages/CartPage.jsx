@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 
@@ -22,7 +21,7 @@ export default function CartPage() {
   }
 
   return (
-    <section style={{ padding: "48px 24px", maxWidth: 900, margin: "0 auto" }}>
+    <section style={{ padding: "clamp(24px, 4vw, 48px) clamp(12px, 3vw, 24px)", maxWidth: 900, margin: "0 auto" }}>
       <div className="section-header">
         <div className="section-badge">🛒 السلة</div>
         <div className="section-title">منتجاتك</div>
@@ -30,18 +29,7 @@ export default function CartPage() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {items.map((item) => (
-          <div
-            key={item.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              background: "white",
-              borderRadius: 12,
-              border: "1.5px solid #e5e7eb",
-              padding: 14,
-            }}
-          >
+          <div key={item.id} className="cart-item-card">
             <div
               style={{
                 width: 70,
@@ -52,22 +40,27 @@ export default function CartPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
+                overflow: "hidden",
               }}
             >
-              📦
+              {item.image ? (
+                <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                "📦"
+              )}
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{item.name}</div>
-              <div style={{ color: "#453ec1", fontWeight: 800, fontSize: 15 }}>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.4 }}>{item.name}</div>
+              <div style={{ color: "#453ec1", fontWeight: 800, fontSize: 15, marginTop: 4 }}>
                 {item.price.toLocaleString("ar-DZ")} د.ج
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="cart-item-stepper" style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 onClick={() => updateQty(item.id, item.qty - 1)}
                 style={{
-                  width: 30,
-                  height: 30,
+                  width: 32,
+                  height: 32,
                   borderRadius: 6,
                   border: "1px solid #e5e7eb",
                   background: "white",
@@ -83,8 +76,8 @@ export default function CartPage() {
               <button
                 onClick={() => updateQty(item.id, item.qty + 1)}
                 style={{
-                  width: 30,
-                  height: 30,
+                  width: 32,
+                  height: 32,
                   borderRadius: 6,
                   border: "1px solid #e5e7eb",
                   background: "white",
@@ -96,17 +89,21 @@ export default function CartPage() {
               </button>
             </div>
             <button
+              className="cart-item-delete"
               onClick={() => {
                 removeFromCart(item.id);
                 showToast("🗑️ تمت الإزالة من السلة");
               }}
               style={{
-                background: "none",
+                background: "#fee2e2",
                 border: "none",
+                borderRadius: 6,
+                padding: "6px 10px",
                 cursor: "pointer",
-                fontSize: 18,
+                fontSize: 14,
                 color: "#e24b4a",
               }}
+              title="حذف"
             >
               🗑️
             </button>
@@ -114,25 +111,14 @@ export default function CartPage() {
         ))}
       </div>
 
-      <div
-        style={{
-          marginTop: 24,
-          padding: 20,
-          background: "white",
-          borderRadius: 12,
-          border: "1.5px solid #e5e7eb",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div className="cart-summary-box">
         <div>
           <div style={{ fontSize: 14, color: "#6b7280" }}>المجموع</div>
           <div style={{ fontSize: 24, fontWeight: 800, color: "#453ec1" }}>
             {totalPrice.toLocaleString("ar-DZ")} د.ج
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="cart-summary-btns">
           <button
             className="filter-btn"
             onClick={() => {

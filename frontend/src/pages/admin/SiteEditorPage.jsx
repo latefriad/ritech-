@@ -120,9 +120,9 @@ export default function SiteEditorPage() {
         </button>
       </div>
 
-      <div style={{ display: "flex", gap: 20 }}>
+      <div className="site-editor-layout">
         {/* Sidebar Tabs */}
-        <div style={{ width: 200, flexShrink: 0 }}>
+        <div className="site-editor-tabs">
           <div style={{ background: "white", borderRadius: 14, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
             {tabs.map((tab) => (
               <button

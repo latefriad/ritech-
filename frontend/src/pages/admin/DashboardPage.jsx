@@ -1,80 +1,85 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { db } from "../../services/firebase";
-import { seedDatabase } from "../../services/seed";
+import { Link } from "react-router-dom";
+import { getProducts, getOrders } from "../../services/api";
+import { allProducts } from "../../data/products";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
     totalProducts: 0,
-    totalCategories: 0,
+    totalCategories: 4,
     totalOrders: 0,
     todayOrders: 0,
     totalRevenue: 0,
     todayRevenue: 0,
+    totalStockUnits: 0,
+    totalStockValue: 0,
+    lowStockCount: 0,
+    outOfStockCount: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [seeding, setSeeding] = useState(false);
-  const [seedMsg, setSeedMsg] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
-        let productsCount = 0;
-        let categoriesCount = 0;
-
+        let productsList = [];
         try {
-          const { fetchProducts, fetchCategories } = await import("../../services/firestore");
-          const products = await fetchProducts({ limit: 1000 });
-          productsCount = products.total;
-          const categories = await fetchCategories();
-          categoriesCount = categories.length;
+          const res = await getProducts({ limit: 100 });
+          productsList = res.products && res.products.length > 0 ? res.products : allProducts;
         } catch {
-          try {
-            const { allProducts } = await import("../../data/products");
-            productsCount = allProducts.length;
-          } catch { productsCount = 0; }
-          categoriesCount = 6;
+          productsList = allProducts;
         }
 
-        let totalOrders = 0;
-        let todayOrders = 0;
+        const totalStockUnits = productsList.reduce((acc, p) => acc + (Number(p.stock) || 0), 0);
+        const totalStockValue = productsList.reduce(
+          (acc, p) => acc + (Number(p.price) || 0) * (Number(p.stock) || 0),
+          0
+        );
+        const lowStockCount = productsList.filter(
+          (p) => (Number(p.stock) || 0) > 0 && (Number(p.stock) || 0) <= (p.minStock || 5)
+        ).length;
+        const outOfStockCount = productsList.filter((p) => (Number(p.stock) || 0) === 0).length;
+
+        // Load orders
+        let ordersList = [];
         let totalRevenue = 0;
         let todayRevenue = 0;
-        let recentOrdersList = [];
+        let todayOrders = 0;
 
         try {
-          const ordersSnap = await getDocs(collection(db, "orders"));
+          const res = await getOrders();
+          ordersList = Array.isArray(res) ? res : res.orders || [];
           const today = new Date();
           today.setHours(0, 0, 0, 0);
 
-          ordersSnap.forEach((d) => {
-            const order = d.data();
-            totalOrders++;
-            totalRevenue += order.total || 0;
-
-            const createdAt = order.createdAt?.toDate?.() || new Date(order.createdAt);
+          ordersList.forEach((ord) => {
+            const ordTotal = Number(ord.total) || 0;
+            totalRevenue += ordTotal;
+            const createdAt = new Date(ord.date || ord.createdAt || 0);
             if (createdAt >= today) {
               todayOrders++;
-              todayRevenue += order.total || 0;
+              todayRevenue += ordTotal;
             }
-            recentOrdersList.push({ id: d.id, ...order });
           });
-
-          recentOrdersList.sort((a, b) => {
-            const dateA = a.createdAt?.toDate?.() || new Date(0);
-            const dateB = b.createdAt?.toDate?.() || new Date(0);
-            return dateB - dateA;
-          });
-          recentOrdersList = recentOrdersList.slice(0, 5);
         } catch (err) {
-          console.warn("Orders fetch failed:", err.message);
+          console.warn("Orders load failed:", err.message);
         }
 
         if (!cancelled) {
-          setStats({ totalProducts: productsCount, totalCategories: categoriesCount, totalOrders, todayOrders, totalRevenue, todayRevenue });
-          setRecentOrders(recentOrdersList);
+          setStats({
+            totalProducts: productsList.length,
+            totalCategories: 4,
+            totalOrders: ordersList.length,
+            todayOrders,
+            totalRevenue,
+            todayRevenue,
+            totalStockUnits,
+            totalStockValue,
+            lowStockCount,
+            outOfStockCount,
+          });
+          setRecentOrders(ordersList.slice(0, 5));
           setLoading(false);
         }
       } catch {
@@ -82,128 +87,292 @@ export default function DashboardPage() {
       }
     }
     load();
-    return () => { cancelled = true; };
+    const handleSyncEvent = () => load();
+    window.addEventListener("site_synced", handleSyncEvent);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("site_synced", handleSyncEvent);
+    };
   }, []);
 
-  const handleDeleteAllProducts = async () => {
-    if (!confirm("⚠️ هل أنت متأكد من حذف جميع المنتجات؟ لا يمكن التراجع!")) return;
-    if (!confirm("🔥تأكيد أخير: حذف جميع المنتجات نهائياً؟")) return;
-
-    try {
-      const productsSnap = await getDocs(collection(db, "products"));
-      const batch = [];
-      productsSnap.forEach((d) => {
-        batch.push(deleteDoc(doc(db, "products", d.id)));
-      });
-      await Promise.all(batch);
-      setStats((prev) => ({ ...prev, totalProducts: 0 }));
-      alert("✅ تم حذف جميع المنتجات");
-    } catch (err) {
-      alert("❌ خطأ: " + err.message);
-    }
-  };
-
   const statCards = [
-    { icon: "📦", label: "المنتجات", value: stats.totalProducts, color: "#453ec1" },
-    { icon: "🏷️", label: "التصنيفات", value: stats.totalCategories, color: "#1a9e75" },
-    { icon: "🛒", label: "إجمالي الطلبات", value: stats.totalOrders, color: "#e24b4a" },
+    { icon: "📦", label: "عدد المنتجات", value: stats.totalProducts, color: "#453ec1" },
+    { icon: "🏬", label: "وحدات المخزون المتوفرة", value: `${stats.totalStockUnits} قطعة`, color: "#16a34a" },
+    { icon: "💰", label: "قيمة المخزون الإجمالية", value: `${stats.totalStockValue.toLocaleString("ar-DZ")} د.ج`, color: "#453ec1" },
+    { icon: "🛒", label: "إجمالي الطلبات", value: stats.totalOrders, color: "#0284c7" },
+    { icon: "💵", label: "إجمالي المبيعات", value: `${stats.totalRevenue.toLocaleString("ar-DZ")} د.ج`, color: "#16a34a" },
     { icon: "📅", label: "طلبات اليوم", value: stats.todayOrders, color: "#f5a623" },
-    { icon: "💰", label: "إجمالي الإيرادات", value: `${stats.totalRevenue.toLocaleString("ar-DZ")} د.ج`, color: "#453ec1" },
-    { icon: "💵", label: "إيرادات اليوم", value: `${stats.todayRevenue.toLocaleString("ar-DZ")} د.ج`, color: "#1a9e75" },
   ];
 
   if (loading) {
-    return <div style={{ textAlign: "center", padding: 60, color: "#6b7280" }}>⏳ جاري التحميل...</div>;
+    return <div style={{ textAlign: "center", padding: 60, color: "#6b7280" }}>⏳ جاري تحميل لوحة التحكم...</div>;
   }
 
   return (
     <div>
-      <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 24 }}>مرحباً بك في لوحة التحكم</h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div>
+          <h3 style={{ fontSize: 22, fontWeight: 800, margin: 0, color: "#111827" }}>
+            مرحباً بك في لوحة تحكم جهزك للتقنية
+          </h3>
+          <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 13 }}>
+            نظرة عامة على المبيعات، المخزون، والطلبات الواردة
+          </p>
+        </div>
+        <Link
+          to="/admin/stock"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 16px",
+            background: "#453ec1",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 700,
+          }}
+        >
+          🏬 فتح إدارة المخزون
+        </Link>
+      </div>
+
+      {/* Stock Alert Banner */}
+      {(stats.lowStockCount > 0 || stats.outOfStockCount > 0) && (
+        <div
+          style={{
+            background: "#fffbeb",
+            border: "1.5px solid #fde68a",
+            borderRadius: 12,
+            padding: "16px 20px",
+            marginBottom: 24,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 24 }}>⚠️</span>
+            <div>
+              <div style={{ fontWeight: 800, color: "#92400e", fontSize: 14 }}>
+                تنبيه حالة المخزون (Gestion de Stock)
+              </div>
+              <div style={{ color: "#b45309", fontSize: 13, marginTop: 2 }}>
+                يوجد <strong>{stats.lowStockCount}</strong> منتج بمخزون منخفض، و <strong>{stats.outOfStockCount}</strong> منتج نفد بالكامل بحاجة إلى إعادة تزويد.
+              </div>
+            </div>
+          </div>
+          <Link
+            to="/admin/stock"
+            style={{
+              padding: "7px 14px",
+              background: "#d97706",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
+            تعديل وتزويد المخزون الآن ➔
+          </Link>
+        </div>
+      )}
 
       {/* Stats Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 32 }}>
         {statCards.map((card) => (
-          <div key={card.label} style={{ background: "white", borderRadius: 14, border: "1.5px solid #e5e7eb", padding: 20, display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: `${card.color}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
+          <div
+            key={card.label}
+            style={{
+              background: "white",
+              borderRadius: 14,
+              border: "1.5px solid #e5e7eb",
+              padding: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: `${card.color}15`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 24,
+              }}
+            >
               {card.icon}
             </div>
             <div>
               <div style={{ fontSize: 12, color: "#6b7280" }}>{card.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: card.color }}>{card.value}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: card.color }}>{card.value}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Seed Database */}
-      {stats.totalProducts === 0 && (
-        <div style={{ background: "#eeedfe", borderRadius: 14, border: "2px dashed #453ec1", padding: 24, marginBottom: 32, textAlign: "center" }}>
-          <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: "#453ec1" }}>🌱 لم تتم إضافة المنتجات بعد</h4>
-          <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>اضغط الزر لإنشاء 9 منتجات و 6 تصنيفات في Firestore</p>
-          <button
-            onClick={async () => {
-              setSeeding(true);
-              setSeedMsg("");
-              try {
-                const result = await seedDatabase();
-                setSeedMsg(result.message);
-                if (result.created) window.location.reload();
-              } catch (err) {
-                setSeedMsg("❌ خطأ: " + err.message);
-              } finally {
-                setSeeding(false);
-              }
-            }}
-            disabled={seeding}
-            className="btn-buy"
-            style={{ opacity: seeding ? 0.7 : 1 }}
-          >
-            {seeding ? "⏳ جاري الإنشاء..." : "🌱 إنشاء المنتجات والتصنيفات"}
-          </button>
-          {seedMsg && <p style={{ marginTop: 12, fontSize: 14, fontWeight: 600, color: "#453ec1" }}>{seedMsg}</p>}
-        </div>
-      )}
-
       {/* Quick Actions + Recent Orders */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        {/* Quick Actions */}
         <div style={{ background: "white", borderRadius: 14, border: "1.5px solid #e5e7eb", padding: 24 }}>
           <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>⚡ إجراءات سريعة</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <a href="/admin/products" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8, background: "#f5f5f8", fontSize: 14, fontWeight: 600, color: "#1a1a2e", textDecoration: "none" }}>📦 إدارة المنتجات</a>
-            <a href="/admin/orders" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8, background: "#f5f5f8", fontSize: 14, fontWeight: 600, color: "#1a1a2e", textDecoration: "none" }}>🛒 عرض الطلبات</a>
-            <a href="/admin/editor" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8, background: "#f5f5f8", fontSize: 14, fontWeight: 600, color: "#1a1a2e", textDecoration: "none" }}>🎨 تخصيص الموقع</a>
-            <a href="/" target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8, background: "#eeedfe", fontSize: 14, fontWeight: 600, color: "#453ec1", textDecoration: "none" }}>🌐 زيارة المتجر</a>
+            <Link
+              to="/admin/stock"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "11px 14px",
+                borderRadius: 8,
+                background: "#eeedfe",
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#453ec1",
+                textDecoration: "none",
+              }}
+            >
+              <span>🏬 إدارة المخزون (Gestion de Stock)</span>
+              <span style={{ fontSize: 12, background: "#453ec1", color: "white", padding: "2px 8px", borderRadius: 10 }}>
+                {stats.totalStockUnits} قطعة
+              </span>
+            </Link>
+            <Link
+              to="/admin/products"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "#f5f5f8",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#1a1a2e",
+                textDecoration: "none",
+              }}
+            >
+              📦 قائمة المنتجات والتسعير
+            </Link>
+            <Link
+              to="/admin/orders"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "#f5f5f8",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#1a1a2e",
+                textDecoration: "none",
+              }}
+            >
+              🛒 إدارة الطلبات ومتابعة التوصيل
+            </Link>
+            <Link
+              to="/admin/editor"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "#f5f5f8",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#1a1a2e",
+                textDecoration: "none",
+              }}
+            >
+              🎨 تخصيص الموقع والشعارات
+            </Link>
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "#f0fdf4",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#16a34a",
+                textDecoration: "none",
+              }}
+            >
+              🌐 معاينة المتجر المباشر
+            </a>
           </div>
         </div>
 
+        {/* Recent Orders */}
         <div style={{ background: "white", borderRadius: 14, border: "1.5px solid #e5e7eb", padding: 24 }}>
-          <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>📋 آخر الطلبات</h4>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h4 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>📋 آخر الطلبات الواردة</h4>
+            <Link to="/admin/orders" style={{ fontSize: 12, color: "#453ec1", textDecoration: "none", fontWeight: 700 }}>
+              عرض الكل ➔
+            </Link>
+          </div>
+
           {recentOrders.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "20px 0", color: "#6b7280", fontSize: 14 }}>لا توجد طلبات بعد</div>
+            <div style={{ textAlign: "center", padding: "40px 0", color: "#6b7280", fontSize: 14 }}>
+              لا توجد طلبات بعد
+            </div>
           ) : (
             recentOrders.map((order) => (
-              <div key={order.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #f0f0f0", fontSize: 13 }}>
+              <div
+                key={order.id || order.orderId}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "10px 0",
+                  borderBottom: "1px solid #f0f0f0",
+                  fontSize: 13,
+                }}
+              >
                 <div>
-                  <div style={{ fontWeight: 600 }}>{order.name}</div>
-                  <div style={{ fontSize: 11, color: "#6b7280" }}>{order.wilaya || order.address}</div>
+                  <div style={{ fontWeight: 700, color: "#111827" }}>
+                    #{order.id || order.orderId} — {order.name || order.customerName || "عميل"}
+                  </div>
+                  <div style={{ color: "#6b7280", fontSize: 11 }}>
+                    {order.wilaya || ""} {order.phone ? `(${order.phone})` : ""}
+                  </div>
                 </div>
-                <span style={{ color: "#453ec1", fontWeight: 700 }}>{(order.total || 0).toLocaleString("ar-DZ")} د.ج</span>
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontWeight: 800, color: "#453ec1" }}>
+                    {Number(order.total || 0).toLocaleString()} د.ج
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      padding: "2px 8px",
+                      borderRadius: 10,
+                      background: order.status === "confirmed" ? "#dcfce7" : "#fef3c7",
+                      color: order.status === "confirmed" ? "#16a34a" : "#d97706",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {order.status || "pending"}
+                  </span>
+                </div>
               </div>
             ))
           )}
         </div>
-      </div>
-
-      {/* Danger Zone */}
-      <div style={{ marginTop: 24, background: "white", borderRadius: 14, border: "1.5px solid #e5e7eb", padding: 24 }}>
-        <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: "#e24b4a" }}>⚠️ منطقة الخطر</h4>
-        <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>حذف جميع المنتجات نهائياً — لا يمكن التراجع</p>
-        <button
-          onClick={handleDeleteAllProducts}
-          style={{ padding: "8px 20px", borderRadius: 8, border: "1px solid #e24b4a", background: "white", color: "#e24b4a", fontFamily: "Cairo, sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-        >
-          🗑️ حذف جميع المنتجات
-        </button>
       </div>
     </div>
   );

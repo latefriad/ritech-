@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchProducts } from "../services/firestore";
+import { getProducts } from "../services/api";
 import { allProducts } from "../data/products";
 
 function getStaticFallback({ cat, sort, search, page, limit }) {
@@ -10,7 +10,7 @@ function getStaticFallback({ cat, sort, search, page, limit }) {
   }
   if (search) {
     const q = search.toLowerCase();
-    list = list.filter((p) => p.name.toLowerCase().includes(q));
+    list = list.filter((p) => (p.name || "").toLowerCase().includes(q) || (p.description || "").toLowerCase().includes(q));
   }
   if (sort === "price-asc") list.sort((a, b) => a.price - b.price);
   else if (sort === "price-desc") list.sort((a, b) => b.price - a.price);
@@ -18,8 +18,8 @@ function getStaticFallback({ cat, sort, search, page, limit }) {
     list.sort((a, b) => (b.discount ? 1 : 0) - (a.discount ? 1 : 0));
 
   const total = list.length;
-  const p = page || 1;
-  const l = limit || 20;
+  const p = Number(page) || 1;
+  const l = Number(limit) || 20;
   return { products: list.slice((p - 1) * l, p * l), total };
 }
 
@@ -34,10 +34,10 @@ export default function useProducts({ cat, sort, search, page, limit } = {}) {
   const load = useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      const data = await fetchProducts({ cat, sort, search, page, limit });
+      const data = await getProducts({ cat, sort, search, page, limit });
       setState({ products: data.products, total: data.total, loading: false, error: null });
     } catch (err) {
-      console.warn("Firestore unavailable, using static data:", err.message);
+      console.warn("API/Google Sheets unavailable, using local catalog:", err.message);
       const fallback = getStaticFallback({ cat, sort, search, page, limit });
       setState({ products: fallback.products, total: fallback.total, loading: false, error: null });
     }
@@ -48,10 +48,10 @@ export default function useProducts({ cat, sort, search, page, limit } = {}) {
     (async () => {
       setState((prev) => ({ ...prev, loading: true }));
       try {
-        const data = await fetchProducts({ cat, sort, search, page, limit });
+        const data = await getProducts({ cat, sort, search, page, limit });
         if (!cancelled) setState({ products: data.products, total: data.total, loading: false, error: null });
       } catch (err) {
-        console.warn("Firestore unavailable, using static data:", err.message);
+        console.warn("API/Google Sheets unavailable, using local catalog:", err.message);
         const fallback = getStaticFallback({ cat, sort, search, page, limit });
         if (!cancelled) setState({ products: fallback.products, total: fallback.total, loading: false, error: null });
       }

@@ -24,6 +24,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import ReturnPolicyPage from "./pages/ReturnPolicyPage";
 import NotFound from "./pages/NotFound";
 import DashboardPage from "./pages/admin/DashboardPage";
+import AdminStockPage from "./pages/admin/AdminStockPage";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
@@ -107,6 +108,7 @@ export default function App() {
                   }
                 >
                   <Route index element={<DashboardPage />} />
+                  <Route path="stock" element={<AdminStockPage />} />
                   <Route path="products" element={<AdminProductsPage />} />
                   <Route path="orders" element={<AdminOrdersPage />} />
                   <Route path="customers" element={<AdminCustomersPage />} />

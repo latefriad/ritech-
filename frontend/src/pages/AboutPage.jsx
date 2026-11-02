@@ -2,17 +2,17 @@ export default function AboutPage() {
   return (
     <section style={{ padding: "48px 24px", maxWidth: 800, margin: "0 auto" }}>
       <div className="section-header">
-        <div className="section-badge">💎 عن المتجر</div>
-        <div className="section-title">جهزك</div>
+        <div className="section-badge">⚡ عن المتجر</div>
+        <div className="section-title">جهزك للتقنية</div>
       </div>
 
       <div style={{ background: "white", borderRadius: 14, border: "1.5px solid #e5e7eb", padding: 32, lineHeight: 2, fontSize: 15 }}>
         <p style={{ fontSize: 17, marginBottom: 20 }}>
-          مرحباً بكم في <strong style={{ color: "#453ec1" }}>جهزك</strong> — متجركم المفضل للمنتجات الأصلية والtractات العصرية.
+          مرحباً بكم في <strong style={{ color: "#453ec1" }}>جهزك للتقنية</strong> — وجهتكم الموثوقة لأحدث الهواتف الذكية، الحواسيب المحمولة والمكتبية، وإكسسواراتها الأصلية في الجزائر.
         </p>
 
         <p style={{ color: "#6b7280", marginBottom: 20 }}>
-          نهدف لمنحك تجربة تسوّق سهلة وممتعة مع أفضل المنتجات وأسرع التوصيل لجميع ولايات الجزائر. نحرص على توفير منتجات أصلية بجودة عالية وأسعار مناسبة للجميع.
+          نحن متخصصون في توفير أحدث وأقوى الأجهزة الإلكترونية من كبرى الشركات العالمية (Apple, Samsung, ASUS, Lenovo, Xiaomi, Logitech) مع ضمان حقيقي وخدمة توصيل سريعة لجميع ولايات الجزائر والدفع عند الاستلام بعد فحص جهازك.
         </p>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 24 }}>

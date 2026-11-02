@@ -49,6 +49,30 @@ export async function getOrderById(id) {
   return request(`/orders/${id}`);
 }
 
+export async function getOrders() {
+  return request("/orders");
+}
+
+export async function updateOrderStatus(id, status) {
+  return request(`/orders/${id}/status`, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function updateStock(id, stock) {
+  return request(`/products/${id}/stock`, {
+    method: "PATCH",
+    body: JSON.stringify({ stock: Number(stock) }),
+  });
+}
+
+export async function syncGoogleSheets() {
+  return request("/sync", {
+    method: "POST",
+  });
+}
+
 export async function getUserProfile(uid) {
   return request(`/users/${uid}`);
 }

@@ -5,8 +5,8 @@ export default function CategoriesSection() {
   return (
     <section className="section" style={{ background: "white" }}>
       <div className="section-header">
-        <div className="section-badge">🏷️ التصنيفات</div>
-        <div className="section-title">تناسب جميع الأذواق</div>
+        <div className="section-badge">🏷️ الأقسام الرئيسية</div>
+        <div className="section-title">اختر فئتك المفضلة</div>
       </div>
       <div className="cats-grid">
         {categories.map((cat) => (

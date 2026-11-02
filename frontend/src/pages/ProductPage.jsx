@@ -2,8 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useWishlist } from "../context/WishlistContext";
 import { useToast } from "../context/ToastContext";
-import { fetchProductById } from "../services/firestore";
-import { createOrder } from "../services/firestore";
+import { getProductById, createOrder } from "../services/api";
 import { allProducts } from "../data/products";
 import { wilayas } from "../data/wilayas";
 import ProductImage from "../components/products/ProductImage";
@@ -28,7 +27,7 @@ export default function ProductPage() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchProductById(id);
+        const data = await getProductById(id);
         if (!cancelled) setProduct(data);
       } catch {
         const fallback = allProducts.find(
@@ -140,9 +139,9 @@ export default function ProductPage() {
   };
 
   return (
-    <section style={{ padding: "48px 24px", maxWidth: 1000, margin: "0 auto" }}>
+    <section style={{ padding: "clamp(20px, 4vw, 48px) clamp(12px, 3vw, 24px)", maxWidth: 1000, margin: "0 auto" }}>
       {/* Breadcrumb */}
-      <div style={{ marginBottom: 20, fontSize: 13, color: "#6b7280" }}>
+      <div style={{ marginBottom: 20, fontSize: 13, color: "#6b7280", overflowX: "auto", whiteSpace: "nowrap", paddingBottom: 4 }}>
         <Link to="/" style={{ color: "#6b7280", textDecoration: "none" }}>الرئيسية</Link>
         <span style={{ margin: "0 8px" }}>/</span>
         <Link to="/shop" style={{ color: "#6b7280", textDecoration: "none" }}>المتجر</Link>
@@ -150,9 +149,9 @@ export default function ProductPage() {
         <span style={{ color: "#453ec1", fontWeight: 600 }}>{product.name}</span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+      <div className="product-detail-grid">
         {/* Product Image */}
-        <div style={{ position: "sticky", top: 100, alignSelf: "start" }}>
+        <div className="product-detail-sticky">
           <div
             style={{
               background: "white",
@@ -220,6 +219,23 @@ export default function ProductPage() {
 
             <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 8 }}>
               التصنيف: <span style={{ fontWeight: 600 }}>{product.cat}</span>
+            </div>
+
+            {/* Stock Availability Badge */}
+            <div style={{ marginBottom: 12 }}>
+              {product.stock === 0 ? (
+                <span style={{ padding: "4px 12px", borderRadius: 6, background: "#fee2e2", color: "#e24b4a", fontWeight: 800, fontSize: 12, display: "inline-block" }}>
+                  ❌ نفد من المخزون حالياً (Rupture de Stock)
+                </span>
+              ) : product.stock !== undefined && product.stock <= (product.minStock || 5) ? (
+                <span style={{ padding: "4px 12px", borderRadius: 6, background: "#fef3c7", color: "#b45309", fontWeight: 800, fontSize: 12, display: "inline-block" }}>
+                  ⚠️ سارع بالطلب! متبقي {product.stock} قطع فقط في المخزون
+                </span>
+              ) : (
+                <span style={{ padding: "4px 12px", borderRadius: 6, background: "#dcfce7", color: "#15803d", fontWeight: 800, fontSize: 12, display: "inline-block" }}>
+                  ✅ متوفر في المخزون ({product.stock !== undefined ? product.stock : 10} قطعة جاهزة للشحن)
+                </span>
+              )}
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
